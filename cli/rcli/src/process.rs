@@ -1,6 +1,9 @@
 use std::fs;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use crate::opts::OutputFormat;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -14,22 +17,31 @@ pub struct Record {
     state: String,
 }
 
-pub fn read_csv(path: &str) -> Vec<Record> {
+pub fn read_csv(path: &str) -> Vec<Value> {
     let mut rdr = csv::Reader::from_path(path).unwrap();
     // for result in rdr.records() {
     //     let record = result.expect("a CSV record");
     //     println!("{:?}", record);
     // }
     let mut res = Vec::with_capacity(128);
-    for result in rdr.deserialize() {
-        let record: Record = result.unwrap();
-        res.push(record);
+    let headers = rdr.headers().unwrap().clone();
+    for result in rdr.records() {
+        // let record: Record = result.unwrap();
+        let record = result.unwrap();
+        let json_value = headers.iter().zip(record.iter()).collect::<Value>();
+        res.push(json_value);
     }
 
     res
 }
 
-pub fn write_json(path: &str, res: &Vec<Record>) {
-    let json = serde_json::to_string_pretty(&res);
-    fs::write(path, json.unwrap()).expect("写入json数据失败")
+pub fn write_data(path: &str, format: OutputFormat, res: &Vec<Value>) {
+    match format {
+        OutputFormat::Json => {
+            fs::write(path, serde_json::to_string_pretty(&res).unwrap()).expect("写入json数据失败");
+        }
+        OutputFormat::Yaml => {
+            fs::write(path, serde_yaml::to_string(&res).unwrap()).expect("写入yaml数据失败");
+        }
+    }
 }

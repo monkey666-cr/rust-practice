@@ -1,5 +1,5 @@
 use clap::Parser;
-use rcli::{read_csv, write_json};
+use rcli::{read_csv, write_data};
 use rcli::{Opts, SubCommand};
 
 fn main() {
@@ -8,7 +8,15 @@ fn main() {
     match opts.cmd {
         SubCommand::Csv(csv_opts) => {
             let res = read_csv(&csv_opts.input);
-            write_json(&csv_opts.output, &res);
+
+            // 输出文件名称
+            let output = if let Some(output) = csv_opts.output {
+                output
+            } else {
+                format!("output.{}", csv_opts.format)
+            };
+
+            write_data(&output, csv_opts.format, &res);
         }
     }
 }
