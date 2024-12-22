@@ -1,5 +1,5 @@
 use clap::Parser;
-use rcli::{read_csv, write_data};
+use rcli::{process_genpass, read_csv, write_data};
 use rcli::{Opts, SubCommand};
 
 fn main() {
@@ -17,6 +17,10 @@ fn main() {
             };
 
             write_data(&output, csv_opts.format, &res);
+        }
+        SubCommand::GenPass(opts) => {
+            let res = process_genpass(opts);
+            println!("随机生成的密码为: {}", res);
         }
     }
 }
