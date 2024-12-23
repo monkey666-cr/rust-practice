@@ -1,6 +1,8 @@
-use std::{fmt::Display, path::Path, str::FromStr};
+use std::{fmt::Display, str::FromStr};
 
 use clap::Parser;
+
+use super::verify_input_file;
 
 #[derive(Debug, Copy, Clone)]
 pub enum OutputFormat {
@@ -61,14 +63,6 @@ pub struct CsvOpts {
 
     #[arg(long, default_value_t = false)]
     pub header: bool,
-}
-
-fn verify_input_file(filename: &str) -> Result<String, String> {
-    if Path::new(filename).exists() {
-        Ok(filename.to_string())
-    } else {
-        Err(format!("File {} not found", filename))
-    }
 }
 
 fn parse_format(format: &str) -> Result<OutputFormat, String> {

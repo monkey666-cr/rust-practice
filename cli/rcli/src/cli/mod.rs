@@ -1,6 +1,10 @@
+mod base64;
 mod csv;
 mod genpass;
 
+use std::path::Path;
+
+pub use base64::*;
 pub use csv::*;
 pub use genpass::*;
 
@@ -19,4 +23,27 @@ pub enum SubCommand {
     Csv(CsvOpts),
     #[command(name = "genpass", about = "Generate a random password")]
     GenPass(GenPassOpts),
+    #[command(subcommand, about = "Base64 encode or decode")]
+    Base64(Base64SubCommand),
+}
+
+fn verify_input_file(filename: &str) -> Result<String, String> {
+    if Path::new(filename).exists() {
+        Ok(filename.to_string())
+    } else {
+        Err(format!("File {} not found", filename))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_verify_input_file() {
+        assert_eq!(
+            verify_input_file("no-exist"),
+            Err("File no-exist not found".to_string())
+        );
+    }
 }
