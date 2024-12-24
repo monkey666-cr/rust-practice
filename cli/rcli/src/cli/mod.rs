@@ -1,12 +1,14 @@
 mod base64;
 mod csv;
 mod genpass;
+mod text;
 
 use std::path::Path;
 
 pub use base64::*;
 pub use csv::*;
 pub use genpass::*;
+pub use text::*;
 
 use clap::Parser;
 
@@ -25,10 +27,12 @@ pub enum SubCommand {
     GenPass(GenPassOpts),
     #[command(subcommand, about = "Base64 encode or decode")]
     Base64(Base64SubCommand),
+    #[command(subcommand, about = "Text sign/verify")]
+    Text(TextSubCommand),
 }
 
 fn verify_input_file(filename: &str) -> Result<String, String> {
-    if Path::new(filename).exists() {
+    if filename == "-" || Path::new(filename).exists() {
         Ok(filename.to_string())
     } else {
         Err(format!("File {} not found", filename))
