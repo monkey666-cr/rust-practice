@@ -1,7 +1,10 @@
+use std::fs;
+
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use clap::Parser;
 use rcli::{
-    get_reader, process_decode, process_encode, process_generate, process_genpass, process_sign,
-    process_verify, read_csv, write_data,
+    get_content, get_reader, process_decode, process_encode, process_genpass,
+    process_text_key_generate, process_text_sign, process_text_verify, read_csv, write_data,
 };
 use rcli::{Base64SubCommand, Opts, SubCommand, TextSubCommand};
 
@@ -22,7 +25,13 @@ fn main() {
             write_data(&output, csv_opts.format, &res);
         }
         SubCommand::GenPass(opts) => {
-            let res = process_genpass(opts);
+            let res = process_genpass(
+                opts.length,
+                opts.uppercase,
+                opts.lowercase,
+                opts.numbers,
+                opts.symbols,
+            );
             println!("随机生成的密码为: {}", res);
         }
         SubCommand::Base64(subcommand) => match subcommand {
@@ -40,26 +49,29 @@ fn main() {
         SubCommand::Text(subcommand) => match subcommand {
             TextSubCommand::Sign(opts) => {
                 let mut input_reader = get_reader(&opts.input);
-                let mut key_reader = get_reader(&opts.key);
+                let key = get_content(&opts.key).unwrap();
 
-                let res = process_sign(&mut input_reader, &mut key_reader, opts.format);
-
-                println!("签名结果: {}", res);
+                let res = process_text_sign(&mut input_reader, &key, opts.format);
+                let encoded = URL_SAFE_NO_PAD.encode(res.unwrap());
+                println!("签名结果: {:?}", encoded);
             }
             TextSubCommand::Verify(opts) => {
                 let mut input_reader = get_reader(&opts.input);
-                let mut key_reader = get_reader(&opts.key);
-                let mut signature = get_reader(&opts.signature);
-                let res = process_verify(
-                    &mut input_reader,
-                    &mut key_reader,
-                    &mut signature,
-                    opts.format,
-                );
-                println!("verify result: {:?}", res);
+                let key = get_content(&opts.key).unwrap();
+                let decoded = URL_SAFE_NO_PAD.decode(&opts.signature).unwrap();
+                let res =
+                    process_text_verify(&mut input_reader, &key, &decoded, opts.format).unwrap();
+                if res {
+                    println!("验证成功")
+                } else {
+                    print!("验证失败")
+                }
             }
             TextSubCommand::Generate(opts) => {
-                process_generate();
+                let key = process_text_key_generate(opts.format).unwrap();
+                for (k, v) in key {
+                    fs::write(opts.output_path.join(k), v).unwrap();
+                }
                 println!("{:?}", opts);
             }
         },

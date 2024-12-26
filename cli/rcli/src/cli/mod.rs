@@ -3,7 +3,7 @@ mod csv;
 mod genpass;
 mod text;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub use base64::*;
 pub use csv::*;
@@ -36,6 +36,16 @@ fn verify_input_file(filename: &str) -> Result<String, String> {
         Ok(filename.to_string())
     } else {
         Err(format!("File {} not found", filename))
+    }
+}
+
+fn verify_path(path: &str) -> Result<PathBuf, &'static str> {
+    // if input is "-" or file exists
+    let p = Path::new(path);
+    if p.exists() && p.is_dir() {
+        Ok(path.into())
+    } else {
+        Err("Path does not exist or is not a directory")
     }
 }
 
