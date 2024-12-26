@@ -3,12 +3,15 @@ use std::fs;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use clap::Parser;
 use rcli::{
-    get_content, get_reader, process_decode, process_encode, process_genpass,
+    get_content, get_reader, process_decode, process_encode, process_genpass, process_http_serve,
     process_text_key_generate, process_text_sign, process_text_verify, read_csv, write_data,
 };
-use rcli::{Base64SubCommand, Opts, SubCommand, TextSubCommand};
+use rcli::{Base64SubCommand, HttpSubCommand, Opts, SubCommand, TextSubCommand};
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+
     let opts = Opts::parse();
 
     match opts.cmd {
@@ -73,6 +76,11 @@ fn main() {
                     fs::write(opts.output_path.join(k), v).unwrap();
                 }
                 println!("{:?}", opts);
+            }
+        },
+        SubCommand::Http(subcommand) => match subcommand {
+            HttpSubCommand::Serve(opts) => {
+                process_http_serve(opts.dir, opts.port).await.unwrap();
             }
         },
     }
