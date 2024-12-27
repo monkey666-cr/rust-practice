@@ -8,3 +8,9 @@
 - 学习serde-json 基本用法
 - 将csv转换成json
 - 重构代码
+
+## 作业
+
+TODO
+rcli jwt sign --sub acme --aud devicel --exp 14d
+rcli jwt verify -t <token-value>

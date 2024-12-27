@@ -2,8 +2,12 @@ use core::fmt;
 use std::str::FromStr;
 
 use clap::Parser;
+use enum_dispatch::enum_dispatch;
+
+use crate::{get_reader, process_decode, process_encode, CmdExector};
 
 #[derive(Parser, Debug)]
+#[enum_dispatch(CmdExector)]
 pub enum Base64SubCommand {
     #[command(name = "encode", about = "Encode a string to base64")]
     Encode(Base64EncodeOpts),
@@ -17,6 +21,17 @@ pub struct Base64EncodeOpts {
     pub input: String,
     #[arg(short, long, value_parser = parse_base64_format, default_value = "standard")]
     pub format: Base64Format,
+}
+
+impl CmdExector for Base64EncodeOpts {
+    async fn execute(&self) -> anyhow::Result<()> {
+        let mut reader = get_reader(&self.input);
+        let res = process_encode(&mut reader, self.format);
+
+        println!("编码结果: {}", res);
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -58,6 +73,17 @@ pub struct Base64DecodeOpts {
     pub input: String,
     #[arg(short, long, default_value = "standard")]
     pub format: Base64Format,
+}
+
+impl CmdExector for Base64DecodeOpts {
+    async fn execute(&self) -> anyhow::Result<()> {
+        let mut reader = get_reader(&self.input);
+        let res = process_decode(&mut reader, self.format);
+
+        println!("解码结果: {}", res);
+
+        Ok(())
+    }
 }
 
 fn parse_base64_format(format: &str) -> Result<Base64Format, String> {

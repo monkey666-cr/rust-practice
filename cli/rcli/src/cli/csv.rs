@@ -2,6 +2,8 @@ use std::{fmt::Display, str::FromStr};
 
 use clap::Parser;
 
+use crate::{read_csv, write_data, CmdExector};
+
 use super::verify_input_file;
 
 #[derive(Debug, Copy, Clone)]
@@ -67,4 +69,21 @@ pub struct CsvOpts {
 
 fn parse_format(format: &str) -> Result<OutputFormat, String> {
     format.to_lowercase().parse()
+}
+
+impl CmdExector for CsvOpts {
+    async fn execute(&self) -> anyhow::Result<()> {
+        let res = read_csv(&self.input);
+
+        // 输出文件名称
+        let output = if let Some(output) = &self.output {
+            output
+        } else {
+            &format!("output.{}", &self.format)
+        };
+
+        write_data(&output, self.format, &res);
+
+        Ok(())
+    }
 }

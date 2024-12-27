@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 
 pub use base64::*;
 pub use csv::*;
+use enum_dispatch::enum_dispatch;
 pub use genpass::*;
 pub use http::*;
 pub use text::*;
@@ -22,6 +23,7 @@ pub struct Opts {
 }
 
 #[derive(Parser, Debug)]
+#[enum_dispatch(CmdExector)]
 pub enum SubCommand {
     #[command(name = "csv", about = "Show csv, or convert CSV to other formats")]
     Csv(CsvOpts),
