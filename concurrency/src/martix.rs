@@ -1,25 +1,56 @@
 use core::fmt;
 use std::ops::{Add, AddAssign, Mul};
 
-use anyhow::{Ok, Result};
+use anyhow::Result;
 
-#[derive(Debug)]
-pub struct Matrix<T: fmt::Debug> {
+pub struct Matrix<T> {
     data: Vec<T>,
     row: usize,
     col: usize,
 }
 
-impl<T> Matrix<T>
-where
-    T: fmt::Debug,
-{
+impl<T: fmt::Debug> Matrix<T> {
     pub fn new(data: impl Into<Vec<T>>, row: usize, col: usize) -> Self {
         Self {
             data: data.into(),
             row,
             col,
         }
+    }
+}
+
+impl<T> fmt::Display for Matrix<T>
+where
+    T: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{{")?;
+
+        for i in 0..self.row {
+            for j in 0..self.col {
+                write!(f, "{}", self.data[i * self.col + j])?;
+                if j != self.col - 1 {
+                    write!(f, ", ")?;
+                }
+            }
+
+            if i != self.row - 1 {
+                write!(f, "; ")?;
+            }
+        }
+
+        write!(f, "}}")?;
+
+        Ok(())
+    }
+}
+
+impl<T> fmt::Debug for Matrix<T>
+where
+    T: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Matrix(row={}, col={}, {})", self.row, self.col, self)
     }
 }
 
