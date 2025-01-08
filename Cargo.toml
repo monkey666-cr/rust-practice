@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-oneshot = "0.1.8"
 
 [workspace]
-members = ["cli/*", "concurrency"]
+members = ["cli/*", "concurrency", "macors"]
