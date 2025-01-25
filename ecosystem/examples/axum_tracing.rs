@@ -1,10 +1,14 @@
 use std::path::PathBuf;
 
+use anyhow::Error;
+use axum::{extract::Request, routing::get, Router};
 use ecosystem::telemetry::{get_subscriber, init_subscriber};
 use file_rotate::{compression::Compression, suffix::AppendCount, ContentLimit, FileRotate};
-use tracing::info;
+use tokio::net::TcpListener;
+use tracing::{info, instrument};
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Error> {
     let log_dir = PathBuf::from("logs");
     std::fs::create_dir_all(&log_dir).expect("Failed to create logs directory");
 
@@ -24,5 +28,19 @@ fn main() {
 
     init_subscriber(subscriber);
 
-    info!("Hello, world!");
+    let addr = "0.0.0.0:8080";
+    let app = Router::new().route("/", get(index_handler));
+
+    let listener = TcpListener::bind(addr).await?;
+    info!("Starting server on {}", addr);
+    axum::serve(listener, app.into_make_service()).await?;
+
+    Ok(())
+}
+
+#[instrument(fields(http.uri = req.uri().path(), http.method = req.method().as_str()))]
+async fn index_handler(req: Request) -> &'static str {
+    info!("Hello, World!");
+
+    "Hello, World!"
 }

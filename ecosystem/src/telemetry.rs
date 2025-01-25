@@ -1,3 +1,11 @@
+use std::time::Duration;
+
+use opentelemetry::{trace::TracerProvider as _, KeyValue};
+use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::{
+    trace::{RandomIdGenerator, Sampler, Tracer},
+    Resource,
+};
 use tracing::{subscriber::set_global_default, Event, Subscriber};
 use tracing_log::LogTracer;
 use tracing_subscriber::{
@@ -31,6 +39,10 @@ where
     let env_filter =
         EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(env_filter));
 
+    // 初始化OpenTelemetry
+    let tracer = init_optl_tracer().unwrap();
+    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+
     // 创建日志订阅者
     let subscriber = tracing_subscriber::registry()
         .with(env_filter) // 从RUST_LOG环境变量读取配置
@@ -39,7 +51,8 @@ where
                 .with_writer(sink) // 输出到滚动文件
                 .with_ansi(false) // 禁用ANSI颜色
                 .event_format(CustomFormatter), // 应用自定义格式
-        );
+        )
+        .with(telemetry);
 
     #[cfg(debug_assertions)]
     let subscriber = subscriber.with(
@@ -56,6 +69,31 @@ where
 pub fn init_subscriber(subscriber: impl Subscriber + Send + Sync) {
     LogTracer::init().expect("Failed to set logger");
     set_global_default(subscriber).expect("Failed to set subscriber");
+}
+
+fn init_optl_tracer() -> anyhow::Result<Tracer> {
+    let otlp_exporter = opentelemetry_otlp::SpanExporter::builder()
+        .with_tonic()
+        .with_endpoint("http://localhost:4317")
+        .with_timeout(Duration::from_secs(3))
+        .build()?;
+
+    let tracer_provider = opentelemetry_sdk::trace::TracerProvider::builder()
+        .with_batch_exporter(otlp_exporter, opentelemetry_sdk::runtime::Tokio)
+        .with_sampler(Sampler::AlwaysOn)
+        .with_id_generator(RandomIdGenerator::default())
+        .with_max_events_per_span(64)
+        .with_max_attributes_per_span(16)
+        .with_max_events_per_span(16)
+        .with_resource(Resource::new(vec![KeyValue::new(
+            "service.name",
+            "axum-tracing",
+        )]))
+        .build();
+
+    let tracer = tracer_provider.tracer("axum-tracing");
+
+    Ok(tracer)
 }
 
 struct CustomFormatter;
