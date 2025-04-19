@@ -7,11 +7,17 @@ edition = "2021"
 affinity = "0.1.2"
 anyhow = "1.0.95"
 crossbeam = "0.8.4"
+futures = { version = "0.3.31", features = ["futures-executor", "thread-pool"] }
 num_cpus = "1.16.0"
 oneshot = "0.1.8"
 rand = "0.8.5"
+rayon = "1.10.0"
+rusty_pool = "0.7.0"
+scheduled-thread-pool = "0.2.7"
+scoped-tls = "1.0.1"
 thread-control = "0.1.2"
 thread-priority = "1.2.0"
+threadpool = "1.8.1"
 tokio = { version = "1.42.0", features = ["rt", "rt-multi-thread", "macros", "net", "io-util"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
